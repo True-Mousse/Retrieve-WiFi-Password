@@ -8,7 +8,7 @@ import configparser
 def get_windows_saved_ssids(): # collect a list of saved ssids
     output = subprocess.check_output("netsh wlan show profiles").decode()
     ssids = []
-    profiles = re.findall(r"All User Profiles\s(.*)",output)
+    profiles = re.findall(r"All User Profile\s(.*)",output)
     for profile in profiles:
         ssid = profile.strip().strip(":").strip() #this removes spaces and colons from ssids
         ssids.append(ssid) # add the above stripped information to the list of ssids
@@ -25,11 +25,11 @@ def get_windows_saved_wifi_passwords(verbose=1):
     Profile = namedtuple("Profile", ["ssid", "ciphers", "key"])
     profiles = []
     for ssid in ssids:
-        ssid_details = subprocesses.check_output(f"""netsh wlan show profile "{ssid}" key=clear""").decode()
+        ssid_details = subprocess.check_output(f"""netsh wlan show profile "{ssid}" key=clear""").decode()
         # the above line gets the ciphers
         ciphers = re.findall(r"Cipher\s(.*)", ssid_details) # remove spaces and colon
         ciphers = "/".join([c.strip().strip(":").strip() for c in ciphers]) # this gets the actual
-        key = findall(f"Key Content\s(.*)", ssid_details)
+        key = re.findall(r"Key Content\s(.*)", ssid_details)
         
         try:
             key = key[0].strip().strip(":").strip()
@@ -61,7 +61,7 @@ def get_linux_saved_wifi_passwords(verbose=1):
         profiles = []
         for file in os.listdir(network_connections_path):
             date = {k.replace("-", "_"): None for k in fields}
-            config = nfigparser.ConfigParser()
+            config = configparser.ConfigParser()
             config.read(os.path.join(network_connections_path, file))
             for _, section in config.items():
                 for k, v in section.items():
@@ -69,7 +69,7 @@ def get_linux_saved_wifi_passwords(verbose=1):
                         data[k.replace("-", "_")] = V
             profile = Profile(**data)
             if verbose >= 1:
-                print_linux_profie(profile)
+                print_linux_profiles(profile)
             profiles.append(profile)
         return profiles
 def print_linux_profiles(profile): # prints a single linux profile
@@ -89,8 +89,3 @@ def print_profiles(verbose=1):
         
 if __name__=="__main__":
     print_profiles()
-       
-
-
-
-
